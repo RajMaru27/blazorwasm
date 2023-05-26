@@ -1,0 +1,105 @@
+﻿@page "/banklists"
+<PageTitle>Bank</PageTitle>
+@inject HttpClient Http
+@inject IJSRuntime jsRuntime
+<h3>BankList</h3>
+<a href="/bank/add" class="btn btn-secondary my-2">Add More</a><br />
+<div class="row">
+    <div class="col-md-6">
+        <input type="text" class="form-control" placeholder="Search by Name" @bind="searchText" @bind:event="oninput" @onkeyup="Search"/>
+        <table class="table">
+            <thead>
+                <tr>
+                    <td>
+                        <h5>Name</h5>
+                    </td>
+                    <td>
+                        <h5>AccountNumber</h5>
+                    </td>
+                    <td>
+                        <h5>AccountType</h5>
+                    </td>
+                    <td>
+                        <h5>Branch</h5>
+                    </td>
+                    <td>
+                        <h5>IfscCode</h5>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var B in List)
+                {
+                    <tr>
+                        <td>
+                            @B.Name
+                        </td>
+                        <td>
+                            @B.AccountNumber
+                        </td>
+                        @if (B.AccountType == 1)
+                        {
+                            <td>
+                                Savings
+                            </td>
+                        }
+                        @if (B.AccountType == 2)
+                        {
+                            <td>
+                                Current
+                            </td>
+                        }
+                        @if (B.AccountType == 3)
+                        {
+                            <td>
+                                Salary
+                            </td>
+                        }                       
+                        <td>
+                            @B.Branch
+                        </td>
+                        <td>
+                            @B.IfscCode
+                        </td>
+                        <td>
+                            <a href="bank/edit/@B.Id" class="btn btn-success">Edit</a>
+                            <a class="btn btn-danger" @onclick="async ()=> await Delete(B)">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<Bank> List = new List<Bank>();
+    private BankList bankList = new();
+    private string searchText = string.Empty;
+
+    private async Task Search()
+    {
+        bankList.SearchTerm = searchText;
+        await Get();
+    }
+
+    private async Task Delete(Bank bank)
+    {
+        bool Confirmed = await jsRuntime.InvokeAsync<bool>("confirm", "Are you sure?");
+        @if (Confirmed)
+        {
+            await Http.DeleteAsync($"api/bank/delete/{bank.Id}");
+            await Get();
+        }
+    }
+
+    private async Task Get()
+    {
+        List = await Http.GetFromJsonAsync<List<Bank>>($"api/bank/GetAll?sTerm={searchText}");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Get();
+    }
+}

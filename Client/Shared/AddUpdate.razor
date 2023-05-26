@@ -1,0 +1,68 @@
+﻿@page "/bank/add"
+@page "/bank/edit/{id:int}"
+@inject HttpClient http
+<PageTitle>@Title</PageTitle>
+<h3>@Title</h3>
+
+<div class="row">
+    <div class="col-md-6">
+        <a href="banklists" class="btn btn-secondary my-2">All Records</a>
+        <EditForm Model="@bank" OnValidSubmit="Save">
+            <DataAnnotationsValidator />
+            <div>
+                <label for="name">Name</label>
+                <InputText id="name" @bind-Value="@bank.Name" class="form-control"></InputText>
+            </div>
+            <div>
+                <label for="accountnumber">AccountNumber</label>
+                <InputText id="accountnumber" @bind-Value="@bank.AccountNumber" class="form-control"></InputText>
+            </div>
+            <div>
+                <label class="form-lable"><h5>Select you account</h5></label><br />
+                <InputRadioGroup @bind-Value="@bank.AccountType">
+                   <InputRadio class="form-check-input" Value="1" /> Savings
+                    <InputRadio class="form-check-input" Value="2" /> Current
+                    <InputRadio class="form-check-input" Value="3" /> Salary
+                </InputRadioGroup>
+            </div><br />
+            <div>
+                <label for="branch">Branch</label>
+                <InputText id="branch" @bind-Value="@bank.Branch" class="form-control"></InputText>
+            </div>
+            <div>
+                <label for="ifsccode">IfscCode</label>
+                <InputText id="ifsccode" @bind-Value="@bank.IfscCode" class="form-control"></InputText>
+            </div>
+            <div class="py-2">
+                @status.Message
+            </div>
+
+            <div class="py-2">
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private string Title = "Add";
+    Bank bank = new();
+    Status status = new();
+
+    private async Task Save()
+    {
+        var response = await http.PostAsJsonAsync("api/bank/addupdate", bank);
+        status = await response.Content.ReadFromJsonAsync<Status>();
+        status.Message = "Data Saved successfully";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            bank = await http.GetFromJsonAsync<Bank>($"api/bank/getbyid/{Id}");
+        }
+    }
+}
